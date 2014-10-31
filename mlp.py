@@ -32,7 +32,7 @@ class mlp:
 			paramList[5] = math.log(0.1)
 		self.oneMinusLowPassV = 1 - self.lowPassV
 		self.oneMinusLowPassW = 1 - self.lowPassW
-		self.batchSize = 30
+		self.batchSize = 100
 #		self.batchSize = int(1 + abs(paramList[6]))
 #		if (256 < paramList[6]):
 #			paramList[6] = 256;
@@ -57,7 +57,7 @@ class mlp:
 		self.errorDerivative = 0
 
 
-		
+	# Only four of the parameters are still enabled...
 	def printParameters(self):
 #		print "j        ", self.sizeOfHiddenLayer
 #		print "beta1    ", self.beta1
@@ -88,9 +88,7 @@ class mlp:
 			if yMax != np.argmax(validTargets[index]):
 				misses += 1
 		p,m1,m2 = self.confusion(valid,validTargets)
-		#print "--"
 		return ((1 - p)*(1-p)*10 + (1-m1)*(1-m1) + (1-m2)*(1-m2))
-		#print misses/float(indices)
 		#return misses/float(indices)
 	
 	def updateErrorDerivative(self):
@@ -123,7 +121,7 @@ class mlp:
 				dV, dW = self.train(y, a, paddedInput, targets[index])
 				self.deltaV += dV
 				self.deltaW += dW
-			self.deltaV /= self.batchSize # normalization
+			self.deltaV /= self.batchSize # normalization; keeps eta independent of batchSize (this could/should be combined with eta into a single memoized scalar)
 			self.deltaW /= self.batchSize
 			self.deltaV = self.deltaV*self.oneMinusLowPassV + self.oldDeltaV*self.lowPassV # "momentum"
 			self.deltaW = self.deltaW*self.oneMinusLowPassW + self.oldDeltaW*self.lowPassW # protip: this is not analogous to physical momentum! 
@@ -137,14 +135,14 @@ class mlp:
 			self.errorHistory.pop()
 			self.errorHistory.insert(0, self.validationError(valid, validTargets))
 			self.updateErrorDerivative()
-		self.V -= self.deltaV # we went too far so back up a step
+		self.V -= self.deltaV # we went too far so back up a step... probably totally unnecessary 
 		self.W -= self.deltaW
 		batches -= 1
 		return self.validationError(valid, validTargets)
 
 	def train(self, y, a, x, t): 
 		dk = (t - y)*y*(1-y)
-		dk = dk*np.array([1,1,1,1,1,1,1,1])
+		dk = dk*np.array([1,1,1,1,1,1,1,1]) # experiment for weighting derivative errors
 		dj = a*(1-a)*self.W.dot(dk)
 		return np.outer(x,dj), np.outer(a,dk) # we can multiply by eta later
 

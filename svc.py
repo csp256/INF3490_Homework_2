@@ -16,8 +16,6 @@ def sklClassify():
 
 	clf.fit(trainingData, newTargets) 
 
-#	for i in range(len(testTargets)):
-#		if (int(clf.predict(testData[i])[0]) != newTestTargets[i]):
 	A = np.zeros((len(testTargets[0]), len(testTargets[0])))
 	for index in range(len(testTargets)):
 		A[newTestTargets[index], clf.predict(testData[index])[0]] += 1
